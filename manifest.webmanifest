@@ -1,0 +1,26 @@
+{
+  "name": "員工工作紀錄",
+  "short_name": "工作紀錄",
+  "description": "獨立記錄員工工時與四種收費，總數按月份加總。資料只儲存在此瀏覽器。",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#1a2b48",
+  "theme_color": "#1a2b48",
+  "lang": "zh-Hant-HK",
+  "icons": [
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-HK">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#1a2b48" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="工作紀錄" />
+  <meta name="description" content="獨立記錄員工工時與收費，總數按月份加總。資料只儲存在此瀏覽器。" />
+  <title>員工工作紀錄</title>
+  <link rel="stylesheet" href="./styles.css" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" type="image/png" href="./favicon.png" />
+  <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
+</head>
+<body>
+  <header class="app-header">
+    <div class="header-row">
+      <div>
+        <h1>員工工作紀錄</h1>
+        <p>時薪／單 job／OT／其他 · 資料只儲存在此瀏覽器</p>
+      </div>
+      <div class="header-actions">
+        <button type="button" class="btn ghost sm" id="btn-export">匯出備份</button>
+        <button type="button" class="btn ghost sm" id="btn-import">匯入備份</button>
+      </div>
+    </div>
+  </header>
+
+  <nav class="tabs" id="tabs">
+    <button type="button" data-tab="employees" class="active">員工</button>
+    <button type="button" data-tab="records">工作紀錄</button>
+    <button type="button" data-tab="rates">收費設定</button>
+    <button type="button" data-tab="totals">總數</button>
+  </nav>
+
+  <main class="container">
+    <p class="install-hint" id="install-hint">
+      可喺 Safari／Chrome 選「加入主畫面」，之後好似 app 一樣開啟。資料唔會同步到其他手機或瀏覽器，請定期匯出備份。
+      <button type="button" class="btn ghost sm" id="dismiss-hint">知道了</button>
+    </p>
+
+    <section class="panel active" id="panel-employees">
+      <div class="toolbar">
+        <div class="field grow">
+          <label>搜尋</label>
+          <input id="emp-q" placeholder="編號／姓名" enterkeyhint="search" />
+        </div>
+        <div class="field">
+          <label>狀態</label>
+          <select id="emp-status">
+            <option value="">全部</option>
+            <option value="active">在職</option>
+            <option value="inactive">停用</option>
+          </select>
+        </div>
+        <button class="btn secondary" type="button" id="emp-new">新增員工</button>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>編號</th><th>姓名</th><th>入職</th><th>狀態</th>
+                <th>部門</th><th>職稱</th><th></th>
+              </tr>
+            </thead>
+            <tbody id="emp-tbody"><tr><td colspan="7" class="empty">暫無員工</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" id="panel-records">
+      <div class="hint">
+        每筆記錄揀一種計費：<strong>時薪</strong>（時薪 × 時數）、<strong>單 job</strong>（單價 × 件數）、
+        <strong>OT</strong>（OT 時薪 × OT 時數）、<strong>其他</strong>（固定額 + 單價 × 數量）。
+        新增後即時計入總數；單價會喺新增嗰陣按當時收費設定鎖定（之後改收費唔會改舊紀錄）。可作廢或刪除。
+      </div>
+      <div class="toolbar">
+        <div class="field">
+          <label>員工</label>
+          <select id="rec-employee"><option value="">全部</option></select>
+        </div>
+        <div class="field">
+          <label>由</label>
+          <input type="date" id="rec-from" />
+        </div>
+        <div class="field">
+          <label>至</label>
+          <input type="date" id="rec-to" />
+        </div>
+        <div class="field">
+          <label>類型</label>
+          <select id="rec-billing">
+            <option value="">全部</option>
+            <option value="hourly">時薪</option>
+            <option value="job">單 job</option>
+            <option value="ot">OT</option>
+            <option value="other">其他</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>計入</label>
+          <select id="rec-counted">
+            <option value="">全部</option>
+            <option value="1">計入總數</option>
+            <option value="0">已作廢</option>
+          </select>
+        </div>
+        <button class="btn secondary" type="button" id="rec-new">新增紀錄</button>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>日期</th><th>員工</th><th>類型</th><th>數量</th>
+                <th>單價</th><th>固定額</th><th>金額</th><th>狀態</th><th></th>
+              </tr>
+            </thead>
+            <tbody id="rec-tbody"><tr><td colspan="9" class="empty">暫無紀錄</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" id="panel-rates">
+      <div class="hint">
+        為每位員工設定四種單價。新增工作紀錄時會帶入當時單價並鎖定喺該筆記錄。改呢度唔會更改已經入咗嘅紀錄。
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>員工</th><th>狀態</th><th>時薪</th><th>單 job 收費</th>
+                <th>OT 時薪</th><th>其他名稱</th><th>其他單價</th><th>其他固定額</th><th></th>
+              </tr>
+            </thead>
+            <tbody id="rate-tbody"><tr><td colspan="9" class="empty">暫無員工，請先新增員工</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" id="panel-totals">
+      <div class="hint">
+        按月份加總已計入嘅紀錄。每人顯示四種金額同合計，最底係全部總數。金額以紀錄當下鎖定嘅單價計算。日期以 Asia/Hong_Kong 計算。
+      </div>
+      <div class="toolbar">
+        <div class="field">
+          <label>月份</label>
+          <input type="month" id="tot-month" />
+        </div>
+        <button class="btn" type="button" id="tot-refresh">查詢</button>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>員工</th>
+                <th>時薪（時數／額）</th>
+                <th>單 job（件／額）</th>
+                <th>OT（時數／額）</th>
+                <th>其他（數量／額）</th>
+                <th>合計</th>
+              </tr>
+            </thead>
+            <tbody id="tot-tbody"><tr><td colspan="6" class="empty">請選月份後查詢</td></tr></tbody>
+            <tfoot id="tot-foot"></tfoot>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <input type="file" id="import-file" accept="application/json,.json" hidden />
+  <div class="toast-wrap" id="toasts"></div>
+
+  <div class="modal-backdrop" id="modal">
+    <div class="modal" role="dialog" aria-modal="true">
+      <header>
+        <h3 id="modal-title">表單</h3>
+        <button class="btn ghost sm" type="button" id="modal-close">關閉</button>
+      </header>
+      <div class="body" id="modal-body"></div>
+      <footer>
+        <button class="btn ghost" type="button" id="modal-cancel">取消</button>
+        <button class="btn" type="button" id="modal-save">儲存</button>
+      </footer>
+    </div>
+  </div>
+
+  <script src="./billing.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>
